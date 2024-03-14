@@ -107,7 +107,7 @@ public class StudentController {
     }
 
     //Niveau d'autorisation : Admin
-    @DeleteMapping("/student/delete/{id}")
+    @DeleteMapping("/student/delete")
     public ResponseEntity<String> deleteStudent (@RequestParam final Long id) {
         try {
             studentService.deleteStudent(id);
@@ -158,12 +158,14 @@ public class StudentController {
     //Niveau d'autorisation : User
     @PutMapping("/student/edit")
     public ResponseEntity<Student> editStudent (@RequestBody Student student) {
+        log.info("In edit");
         try {
             Optional<Student> existingStudent = studentService.getStudent(student.getId());
+            log.info(existingStudent.toString());
             log.info(student.getId().toString());
             if (existingStudent.isPresent()) {
                 Student newStudent = studentService.saveStudent(student);
-                log.info(consoleFormat(Status.SUCCESS, "[Save Student - DONE]  -- Status : " + HttpStatus.OK));
+                log.info(consoleFormat(Status.SUCCESS, "[Edit Student - DONE]  -- Status : " + HttpStatus.OK));
                 return new ResponseEntity<>(newStudent, createCORSHeaders(), HttpStatus.OK);
             } else {
                 log.severe(consoleFormat(Status.ERROR, "[Edit Student - KO]  -- Status : " + HttpStatus.NOT_FOUND));
@@ -172,7 +174,7 @@ public class StudentController {
 
         } catch ( Exception e) {
             log.severe(consoleFormat(Status.ERROR,
-                    "[Save Student - KO]  -- Status : " + HttpStatus.INTERNAL_SERVER_ERROR + e.getMessage()));
+                    "[Edit Student - KO]  -- Status : " + HttpStatus.INTERNAL_SERVER_ERROR + e.getMessage()));
             // e.printStackTrace();
             return new ResponseEntity<>(createCORSHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
         }

@@ -15,7 +15,7 @@ public class Student {
     private Long id;
     private String name;
     @Column (name = "phone_number")
-    private int phoneNumber;
+    private String phoneNumber;
     private String email;
     private String address;
 }

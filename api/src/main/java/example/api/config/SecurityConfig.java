@@ -2,9 +2,11 @@ package example.api.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
@@ -26,21 +28,33 @@ public class SecurityConfig {
     private static  final String[] ADMIN_SECURED_URLs = {"/student/delete/{id}", "/student/clear",
             "/account/delete/{id}", "/account/clear"};
 
+    //Secured filter chain
+//    @Bean
+//    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+//        SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
+//        return http
+//                .csrf(AbstractHttpConfigurer::disable)
+//                .cors((cors) -> cors.configurationSource(corsConfigurationSource()))
+//                .authorizeHttpRequests((adminAuthz) -> adminAuthz
+//                        .requestMatchers(UNSECURED_URLs)
+//                        .permitAll()
+//                        .requestMatchers(USER_SECURED_URLs)
+//                        .hasAnyRole("ADMIN", "USER")
+//                        .requestMatchers(ADMIN_SECURED_URLs)
+//                        .hasAnyRole("ADMIN"))
+//                .securityContext((context) -> context.securityContextRepository(securityContextRepository))
+//
+//                .build();
+//    }
+
+    //Test filter chain
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
         return http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors((cors) -> cors.configurationSource(corsConfigurationSource()))
-                .authorizeHttpRequests((adminAuthz) -> adminAuthz
-                        .requestMatchers(UNSECURED_URLs)
-                        .permitAll()
-                        .requestMatchers(USER_SECURED_URLs)
-                        .hasAnyRole("ADMIN", "USER")
-                        .requestMatchers(ADMIN_SECURED_URLs)
-                        .hasAnyRole("ADMIN"))
-                .securityContext((context) -> context.securityContextRepository(securityContextRepository))
-
+                .cors(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests((testAuth) -> testAuth
+                        .anyRequest().permitAll())
                 .build();
     }
 
@@ -61,4 +75,6 @@ public class SecurityConfig {
     BCryptPasswordEncoder encoder() {
         return new BCryptPasswordEncoder();
     }
+
+
 }

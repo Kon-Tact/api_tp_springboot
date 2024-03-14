@@ -39,9 +39,6 @@ public class AccountController {
         ERROR
     }
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
     private SecurityContextRepository securityContextRepository =
             new HttpSessionSecurityContextRepository();
 
