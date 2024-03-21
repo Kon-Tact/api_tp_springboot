@@ -1,11 +1,14 @@
 package example.api.controller;
 
+import example.api.config.JwtTokenProvider;
 import example.api.model.Student;
 import example.api.service.StudentService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -28,9 +31,20 @@ public class StudentController {
         SUCCESS,
         ERROR
     }
+
+    @Autowired
+    public JwtTokenProvider jwtTokenProvider;
     private static final Logger log = Logger.getLogger(StudentController.class.getName());
     @Autowired
     private StudentService studentService;
+
+    public void checkToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            String token = bearerToken.substring(7);
+            log.info(token);
+        }
+    }
 
     public String consoleFormat(Status status, String message) {
 
@@ -73,8 +87,11 @@ public class StudentController {
 
     //Niveau d'autorisation : Tout le monde
     @GetMapping("/student/list")
-    public Iterable<Student> getStudents() {
+    public Iterable<Student> getStudents(HttpServletRequest request) {
         Iterable<Student> studentList = null;
+
+        checkToken(request);
+
         try {
             studentList = studentService.getStudents();
             log.info(consoleFormat(Status.SUCCESS,
@@ -88,11 +105,14 @@ public class StudentController {
     }
 
     //Niveau d'autorisation : User
-    @GetMapping("/student/{id}")
-    public Optional<Student> getStudent(final Long id) {
+    //@PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
+    @GetMapping("/student/")
+    public Optional<Student> getStudent(final Long id, HttpServletRequest r) {
 
         Optional<Student> student = Optional.empty();
         //La classe Optional permet la gestion de null car elle renvoit l'élément attendu ou rien
+
+        checkToken(r);
 
         try {
             student = studentService.getStudent(id);
@@ -107,6 +127,7 @@ public class StudentController {
     }
 
     //Niveau d'autorisation : Admin
+    //@PreAuthorize("hasAuthority('ADMIN')")
     @DeleteMapping("/student/delete")
     public ResponseEntity<String> deleteStudent (@RequestParam final Long id) {
         try {
@@ -123,9 +144,11 @@ public class StudentController {
         }
     }
 
+
     //Niveau d'autorisation : Admin
+    //@PreAuthorize("hasAuthority('ADMIN')")
     @DeleteMapping("/student/clear")
-    public ResponseEntity<String> deleteAllStudents() {
+    public ResponseEntity<String> deleteAllStudents(HttpServletRequest r) {
         try {
             studentService.clearDB();
             log.info(consoleFormat(Status.SUCCESS,
@@ -141,6 +164,7 @@ public class StudentController {
     }
 
     //Niveau d'autorisation : User
+    //@PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     @PostMapping("/student/save")
     public ResponseEntity<Student> saveStudent (@RequestBody Student student) {
         Student newStudent = null;
@@ -155,21 +179,25 @@ public class StudentController {
         }
     }
 
-    //Niveau d'autorisation : User
+    //Method for editing student
+    //@PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     @PutMapping("/student/edit")
     public ResponseEntity<Student> editStudent (@RequestBody Student student) {
-        log.info("In edit");
+
         try {
             Optional<Student> existingStudent = studentService.getStudent(student.getId());
-            log.info(existingStudent.toString());
-            log.info(student.getId().toString());
+
             if (existingStudent.isPresent()) {
+
                 Student newStudent = studentService.saveStudent(student);
                 log.info(consoleFormat(Status.SUCCESS, "[Edit Student - DONE]  -- Status : " + HttpStatus.OK));
                 return new ResponseEntity<>(newStudent, createCORSHeaders(), HttpStatus.OK);
+
             } else {
+
                 log.severe(consoleFormat(Status.ERROR, "[Edit Student - KO]  -- Status : " + HttpStatus.NOT_FOUND));
                 return new ResponseEntity<>(createCORSHeaders(), HttpStatus.NOT_FOUND);
+
             }
 
         } catch ( Exception e) {
